@@ -4,6 +4,7 @@ Script python qui permet de dispatcher le jeu d'images dans un dossier train, un
     --dest=     : Représente le path du dossier de destination
     --ratio     : Représente le quota pour chaque dossier
     --limit     : Représente le nombre limite d'image à copier
+    --scale     : Représente le scale à impacter sur chaque image
 
 > python split-dataset-images.py --dir=<path-to-directory> --dest=<path-to-directory> --ratio=0.8,0.15,0.05 --limit=1000
 
@@ -20,10 +21,22 @@ import numpy as np
 import pandas as pd
 import shutil
 import progressbar
+import cv2
 
 #########################################################################################
 #   Fonctions
 #########################################################################################
+
+def resize_image(path_filename, scale = 100):
+
+    img = cv2.imread(path_filename, cv2.IMREAD_UNCHANGED)
+
+    scale_percent = scale
+    width = int(img.shape[1] * scale_percent / 100)
+    height = int(img.shape[0] * scale_percent / 100)
+    dim = (width, height)
+
+    return cv2.resize(img, dim, interpolation = cv2.INTER_AREA)
 
 # random.seed(10)
 
@@ -33,6 +46,7 @@ parser.add_argument("--dir", help="Dossier source des images à dispatcher.")
 parser.add_argument("--dest", help="Dossier de destination où copier les images.")
 parser.add_argument("--ratio", help="Quota attribué pour chaque dataset (train, validation, test).")
 parser.add_argument("--limit", help="Nombre limite d'image à copier.")
+parser.add_argument("--scale", help="Indiquer le scale à affecter sur les images.")
 
 args=parser.parse_args()
 
@@ -44,6 +58,7 @@ source = '.'
 dest = '.'
 ratio = (0.8,0.15,0.15)
 limit = -1
+scale_image = 100
 
 DIR_TRAIN = 'train'
 DIR_VALIDATION = 'validation'
@@ -82,6 +97,12 @@ if args.limit is not None:
         limit = abs(int(args.limit))
     except:
         exit("La limite est erronée.")
+
+if args.scale is not None:
+    try:
+        scale_image = abs(int(args.scale))
+    except:
+        exit("Le scale est erroné.")
 
 
 #########################################################################################
@@ -168,6 +189,8 @@ for idx, row in df.iterrows():
             dest_folder = path_test_classe
 
         shutil.copy(os.path.join(row['path'], images[i]), os.path.join(dest_folder, images[i]))
+        resized = resize_image(os.path.join(dest_folder, images[i]), scale=scale_image)
+        cv2.imwrite( os.path.join(dest_folder, images[i] ), resized)
 
 
 # Création du fichier de correspondance des labels
