@@ -2,8 +2,6 @@ import pandas as pd
 from project_data.description import Description
 from project_data.roadmap import Roadmap
 
-# pd.set_option('display.max_row', 111)
-
 class Project():
     '''
     Représente le projet datascience.
@@ -12,6 +10,8 @@ class Project():
     def __init__(self):
         self.version = "It works!"
         self.dataset = None
+        self.dataset_origin = None
+
         self.description = Description(self)
         self.roadmap = Roadmap()
         self.column_target = None
@@ -28,11 +28,17 @@ class Project():
     def __loadDatasetCSV(self, path, sep=","):
         ''' Permet de charger le dataset en fonction du chemin du fichier CSV passé en paramètre via pandas'''
         self.dataset = pd.read_csv(path, sep=sep)
+        self.dataset_origin = self.dataset.copy()
 
     def __loadDatasetExcel(self, path):
         ''' Permet de charger le dataset en fonction du chemin du fichier Excel passé en paramètre via pandas'''
         self.dataset = pd.read_excel(path)
+        self.dataset_origin = self.dataset.copy()
 
     def setTarget(self, column_name):
         ''' Permet de définir la colonne "target" de notre dataset '''
         self.column_target = self.dataset[ column_name ]
+
+    def getTarget(self):
+        ''' Permet de retourner la colonne target du dataset '''
+        return self.column_target
