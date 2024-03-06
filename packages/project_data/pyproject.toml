@@ -21,7 +21,8 @@ dependencies = [
   "seaborn",
   "matplotlib",
   "scipy",
-  "numpy"
+  "numpy",
+  "scikit-learn"
 ]
 
 [project.urls]

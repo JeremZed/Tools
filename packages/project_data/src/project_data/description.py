@@ -42,8 +42,8 @@ class Description():
     def getRatioTarget(self):
         ''' Permet de retourner le ratio des différentes classes présente dans la colonne target '''
 
-        a = self.project.column_target.value_counts(normalize=True).reset_index()
-        b = self.project.column_target.value_counts(normalize=False).reset_index()
+        a = self.project.dataset[self.project.column_target].value_counts(normalize=True).reset_index()
+        b = self.project.dataset[self.project.column_target].value_counts(normalize=False).reset_index()
 
         df = pd.DataFrame(a)
         df['sum'] = b['count']
