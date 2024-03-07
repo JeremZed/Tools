@@ -8,7 +8,7 @@ from sklearn.ensemble import RandomForestRegressor, AdaBoostRegressor
 from sklearn.svm import SVR
 from sklearn.neighbors import KNeighborsRegressor
 
-from sklearn.model_selection import learning_curve
+from sklearn.model_selection import learning_curve, GridSearchCV, RandomizedSearchCV
 from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score, explained_variance_score, precision_score
 from scipy.stats import spearmanr, pearsonr
 
@@ -40,6 +40,7 @@ class Modeling():
         self.y_test = None
 
         self.models = []
+        self.best_models = []
 
     def resetModels(self):
         ''' Permet de vider la pile des models'''
@@ -55,9 +56,9 @@ class Modeling():
         self.X_test = X_test
         self.y_test = y_test
 
-    def addModel(self, name, model):
+    def addModel(self, name, model, hyper_params = {}):
         ''' Permet d'ajouter un model dans la pile '''
-        self.models.append({'name' : name, 'model' : model})
+        self.models.append({'name' : name, 'model' : model, 'hyperparams' : hyper_params})
 
     def getFactory(self, name, **kwargs):
         ''' Factory de différent class '''
@@ -94,6 +95,7 @@ class Modeling():
         sp = spearmanr(ypred, self.y_test).correlation
         pe = pearsonr(ypred, self.y_test).correlation
         ex = explained_variance_score(self.y_test, ypred)
+        score = model.score(self.X_test, self.y_test)
 
         res = {
             'model' : model,
@@ -103,7 +105,8 @@ class Modeling():
             'r2_score' : r2,
             'spearmanr corr' : sp,
             'pearsonr corr' : pe,
-            'ex_variance_score' : ex
+            'ex_variance_score' : ex,
+            'score' : score
         }
 
         return res
@@ -120,10 +123,13 @@ class Modeling():
         plt.legend()
         plt.show()
 
-    def evaluate(self, type="regressor", verbose=True, scoring="MSE"):
+    def evaluateModel(self, _type="regressor", verbose=True, scoring="MSE"):
+        return self.evaluate(self.models, type=_type, verbose=verbose, scoring=scoring)
+
+    def evaluate(self, models, type="regressor", verbose=True, scoring="MSE"):
         ''' Permet de lancer l'évaluation sur l'ensemble des models '''
         results = []
-        for item in self.models:
+        for item in models:
 
             if type == "regressor":
 
@@ -141,3 +147,31 @@ class Modeling():
                     print(f"[model][evaluate]... {item['name']} ... DONE.")
 
         return pd.DataFrame(results).sort_values(scoring, ascending=False)
+
+    def getBestParams(self, models = [], use_randomized=False, cv=5, n_iters=10 ):
+        ''' Permet de lancer l'optimisation des models et de retourner le meilleur paramétrage'''
+
+        self.best_models = []
+        results = []
+        for item in self.models:
+
+            if item['name'] in models:
+
+                if use_randomized == True:
+                    grid = RandomizedSearchCV(item['model'], item['hyperparams'], cv=cv, n_iter=n_iters)
+                else:
+                    grid = GridSearchCV(item['model'], item['hyperparams'], cv=cv)
+
+                grid.fit(self.X_train, self.y_train)
+                results.append({ 'name' : item['name'], 'score' : grid.best_score_, 'params' : grid.best_params_, 'model' : grid.best_estimator_ })
+
+        self.best_models = results
+
+        return pd.DataFrame(results)
+
+    def evaluateBestModels(self, type="regressor", verbose=True, scoring="MSE"):
+        ''' Permet de lancer l'évaluation sur les meilleurs modèles après être optimisé'''
+        return self.evaluate(self.best_models, type=type, verbose=verbose, scoring=scoring)
+
+
+
