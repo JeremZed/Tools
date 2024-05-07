@@ -1,9 +1,0 @@
-LICENSE
-README.md
-pyproject.toml
-src/project_data/__init__.py
-src/project_data/project.py
-src/project_data.egg-info/PKG-INFO
-src/project_data.egg-info/SOURCES.txt
-src/project_data.egg-info/dependency_links.txt
-src/project_data.egg-info/top_level.txt
